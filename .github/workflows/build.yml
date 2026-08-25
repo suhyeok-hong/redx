@@ -26,13 +26,17 @@ jobs:
           npm install
           npm install @capacitor/core@5.7.0 @capacitor/cli@5.7.0 @capacitor/android@5.7.0
           mkdir -p www
-          echo "<html></html>" > www/index.html
+          cat > www/index.html <<'HTML'
+          <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script>location.href="http://redx.dothome.co.kr/visit/";</script></head><body>로딩중...</body></html>
+          HTML
 
       - name: Build Android project
         run: |
           rm -rf android
           npx cap add android
           npx cap sync android
+          # http 사이트 허용 패치
+          sed -i 's/android:supportsRtl="true"/android:supportsRtl="true" android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
 
       - name: Build APK
         run: |
