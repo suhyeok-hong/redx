@@ -11,15 +11,11 @@ export default async function handler(req, res) {
   if (!path.startsWith(DEFAULT_FOLDER) && !path.startsWith('/trips/') && !path.startsWith('/visit/')) {
     let file = path.startsWith('/') ? path.substring(1) : path;
     let qIdx = file.indexOf('?');
-    if (qIdx > -1) {
-      path = DEFAULT_FOLDER + file.substring(0, qIdx) + file.substring(qIdx);
-    } else {
-      path = DEFAULT_FOLDER + file;
-    }
+    if (qIdx > -1) path = DEFAULT_FOLDER + file.substring(0, qIdx) + file.substring(qIdx);
+    else path = DEFAULT_FOLDER + file;
   }
 
   let targetUrl = HOST + path;
-
   let body;
   if (req.method === 'POST') {
     const chunks = [];
@@ -35,63 +31,30 @@ export default async function handler(req, res) {
   if (req.headers.cookie) forwardHeaders["Cookie"] = req.headers.cookie;
 
   try {
-    const r = await fetch(targetUrl, {
-      method: req.method,
-      headers: forwardHeaders,
-      body,
-      redirect: 'manual'
-    });
-
+    const r = await fetch(targetUrl, { method: req.method, headers: forwardHeaders, body, redirect: 'manual' });
+    
     const setCookie = r.headers.getSetCookie ? r.headers.getSetCookie() : r.headers.get('set-cookie');
     if (setCookie) {
-      if (Array.isArray(setCookie)) {
-        setCookie.forEach(c => res.appendHeader('Set-Cookie', c));
-      } else {
-        res.setHeader('Set-Cookie', setCookie);
-      }
+      if (Array.isArray(setCookie)) setCookie.forEach(c => res.appendHeader('Set-Cookie', c));
+      else res.setHeader('Set-Cookie', setCookie);
     }
-
     if (r.status >= 300 && r.status < 400) {
       const loc = r.headers.get('location');
       if (loc) return res.redirect(302, loc.replace(HOST, ''));
     }
 
-    // 파일 다운로드면 바이너리로 그대로
-    const contentType = r.headers.get('content-type') || '';
-    const contentDispo = r.headers.get('content-disposition') || '';
-    const isFile = contentDispo.includes('attachment') ||
-                   contentType.includes('octet-stream') ||
-                   contentType.includes('csv') ||
-                   contentType.includes('excel') ||
-                   contentType.includes('sheet') ||
-                   path.includes('export') ||
-                   path.match(/\.(xlsx|xls|csv|pdf|zip)$/i);
-
-    if (isFile) {
-      res.setHeader('Content-Type', contentType || 'application/octet-stream');
-      if (contentDispo) res.setHeader('Content-Disposition', contentDispo);
+    // ★★★ 엑셀 다운로드는 여기서 바로 리턴! HTML 가공 절대 안함!
+    if (path.includes('excel_download') || path.includes('export')) {
+      const contentType = r.headers.get('content-type') || 'application/octet-stream';
+      const contentDispo = r.headers.get('content-disposition') || 'attachment; filename="export.csv"';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', contentDispo);
       const buffer = Buffer.from(await r.arrayBuffer());
       return res.status(r.status).send(buffer);
     }
 
     let html = await r.text();
-    const fixScript = `
-    <script>
-      (function(){
-        document.querySelectorAll('a').forEach(a=>{
-          if(a.href.includes('export') || a.href.includes('download') || a.href.includes('.csv')) return;
-          if(a.target==='_blank' || a.target==='_new') a.target='_self';
-        });
-        const origOpen = window.open;
-        window.open = function(url){
-          if(url && (url.includes('export') || url.includes('.csv') || url.includes('download'))) {
-            return origOpen.call(window, url, '_blank');
-          }
-          window.location.href = url; 
-          return null;
-        };
-      })();
-    </script>`;
+    const fixScript = `<script>(function(){document.querySelectorAll('a[target="_blank"], a[target="_new"]').forEach(a=>{if(a.href.includes('excel_download')||a.href.includes('export'))return;a.target='_self';});window.open=function(u){if(u&&u.includes('excel_download')){window.location.href=u;return null;}window.location.href=u;return null;};})();</script>`;
     if (html.includes('</body>')) html = html.replace('</body>', fixScript + '</body>');
     else html = html + fixScript;
 
