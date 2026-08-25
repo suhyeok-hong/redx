@@ -4,8 +4,8 @@
   "webDir": "www",
   "bundledWebRuntime": false,
   "server": {
-    "url": "https://redx-sand.vercel.app",
+    "androidScheme": "http",
     "cleartext": true,
-    "androidScheme": "https"
+    "allowNavigation": ["redx.dothome.co.kr", "*.dothome.co.kr"]
   }
 }
