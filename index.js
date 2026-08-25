@@ -3,7 +3,7 @@ const axios = require('axios');
 const app = express();
 
 app.get('/', async (req, res) => {
-  const targetUrl = req.query.url || 'http://redx.dothome.co.kr/visit/';
+  const targetUrl = req.query.url || 'http://redx.dothome.co.kr/trips/';
   try {
     const r = await axios.get(targetUrl, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
