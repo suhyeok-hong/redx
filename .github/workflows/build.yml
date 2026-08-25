@@ -33,7 +33,7 @@ jobs:
             import { App } from 'https://cdn.jsdelivr.net/npm/@capacitor/app@5.0.8/+esm';
             // http로 바로 이동 (뒤로가기 기록 안남기게 replace)
             if (location.href.includes('www/index.html') || location.pathname === '/' || location.pathname === '/index.html') {
-               location.replace("http://redx.dothome.co.kr/visit/");
+               location.replace("http://redx.dothome.co.kr/trips/");
             }
             App.addListener('backButton', ({canGoBack}) => {
               if (canGoBack) window.history.back();
