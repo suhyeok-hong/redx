@@ -1,8 +1,7 @@
 name: Build redx APK
 
 on:
-  push:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -24,10 +23,24 @@ jobs:
       - name: Install dependencies
         run: |
           npm install
-          npm install @capacitor/core@5.7.0 @capacitor/cli@5.7.0 @capacitor/android@5.7.0
+          npm install @capacitor/core@5.7.0 @capacitor/cli@5.7.0 @capacitor/android@5.7.0 @capacitor/app@5.0.8
           mkdir -p www
           cat > www/index.html <<'HTML'
-          <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script>location.href="http://redx.dothome.co.kr/visit/";</script></head><body>로딩중...</body></html>
+          <!DOCTYPE html>
+          <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+          <script type="module">
+            import { Capacitor } from 'https://cdn.jsdelivr.net/npm/@capacitor/core@5.7.0/+esm';
+            import { App } from 'https://cdn.jsdelivr.net/npm/@capacitor/app@5.0.8/+esm';
+            // http로 바로 이동 (뒤로가기 기록 안남기게 replace)
+            if (location.href.includes('www/index.html') || location.pathname === '/' || location.pathname === '/index.html') {
+               location.replace("http://redx.dothome.co.kr/visit/");
+            }
+            App.addListener('backButton', ({canGoBack}) => {
+              if (canGoBack) window.history.back();
+              else App.exitApp();
+            });
+          </script>
+          </head><body>로딩중...</body></html>
           HTML
 
       - name: Build Android project
@@ -35,7 +48,6 @@ jobs:
           rm -rf android
           npx cap add android
           npx cap sync android
-          # http 사이트 허용 패치
           sed -i 's/android:supportsRtl="true"/android:supportsRtl="true" android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
 
       - name: Build APK
