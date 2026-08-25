@@ -56,27 +56,42 @@ export default async function handler(req, res) {
       if (loc) return res.redirect(302, loc.replace(HOST, ''));
     }
 
-    // ★ 파일이면 바이너리로 그대로! HTML이 아니면 전부 파일로 처리
+    // 파일 다운로드면 바이너리로 그대로
     const contentType = r.headers.get('content-type') || '';
     const contentDispo = r.headers.get('content-disposition') || '';
-    const isFile = !contentType.includes('text/html') || 
-                   contentDispo.includes('attachment') ||
-                   path.match(/\.(xlsx|xls|csv|pdf|zip)$/i) ||
-                   contentType.includes('csv') || 
+    const isFile = contentDispo.includes('attachment') ||
+                   contentType.includes('octet-stream') ||
+                   contentType.includes('csv') ||
                    contentType.includes('excel') ||
-                   contentType.includes('sheet');
+                   contentType.includes('sheet') ||
+                   path.includes('export') ||
+                   path.match(/\.(xlsx|xls|csv|pdf|zip)$/i);
 
     if (isFile) {
       res.setHeader('Content-Type', contentType || 'application/octet-stream');
       if (contentDispo) res.setHeader('Content-Disposition', contentDispo);
-      else res.setHeader('Content-Disposition', `attachment; filename="export.csv"`);
-      
       const buffer = Buffer.from(await r.arrayBuffer());
       return res.status(r.status).send(buffer);
     }
 
     let html = await r.text();
-    const fixScript = `<script>(function(){document.querySelectorAll('a[target="_blank"], a[target="_new"]').forEach(a=>a.target='_self');window.open=function(u){window.location.href=u;return null;};})();</script>`;
+    const fixScript = `
+    <script>
+      (function(){
+        document.querySelectorAll('a').forEach(a=>{
+          if(a.href.includes('export') || a.href.includes('download') || a.href.includes('.csv')) return;
+          if(a.target==='_blank' || a.target==='_new') a.target='_self';
+        });
+        const origOpen = window.open;
+        window.open = function(url){
+          if(url && (url.includes('export') || url.includes('.csv') || url.includes('download'))) {
+            return origOpen.call(window, url, '_blank');
+          }
+          window.location.href = url; 
+          return null;
+        };
+      })();
+    </script>`;
     if (html.includes('</body>')) html = html.replace('</body>', fixScript + '</body>');
     else html = html + fixScript;
 
