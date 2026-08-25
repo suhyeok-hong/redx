@@ -25,12 +25,14 @@ jobs:
         run: |
           npm install
           npm install @capacitor/core @capacitor/cli @capacitor/android
+          mkdir -p www
+          echo "<html></html>" > www/index.html
 
       - name: Build Android project
         run: |
           rm -rf android
           npx cap add android
-          npx cap copy android
+          npx cap sync android
 
       - name: Build APK
         run: |
