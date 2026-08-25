@@ -1,6 +1,5 @@
 {
   "rewrites": [
-    { "source": "/apply.php", "destination": "/api" },
     { "source": "/(.*)", "destination": "/api" }
   ]
 }
