@@ -42,4 +42,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: redx-apk
-          path: android/app/build/outputs/apk/debug/visit-rabi.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
