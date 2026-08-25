@@ -2,16 +2,26 @@ export const config = { api: { bodyParser: false } };
 
 export default async function handler(req, res) {
   const HOST = "http://redx.dothome.co.kr";
-  const DEFAULT_FOLDER = "/trips/"; // <-- 폴더 바꿀때 여기 한 줄만 바꾸면 됨!
+  const DEFAULT_FOLDER = "/trips/"; // 기본 폴더는 여기 한 줄만 바꾸면 됨
 
   let path = req.url.replace(/^\/api/, '');
   if (path === '' || path === '/') path = DEFAULT_FOLDER;
 
-  let targetUrl = req.query.url;
-  if (!targetUrl) {
-    // path가 뭔지 상관없이 그대로 닷홈으로 전달 - 자동 인식!
-    targetUrl = HOST + path;
+  // /login.php 처럼 폴더 없이 파일만 오면 기본 폴더 안으로 자동 맵핑
+  if (!path.startsWith(DEFAULT_FOLDER) && !path.startsWith('/trips/') && !path.startsWith('/visit/')) {
+    // /login.php -> /trips/login.php
+    // /css/style.css -> /trips/css/style.css
+    let file = path.startsWith('/') ? path.substring(1) : path;
+    // 이미 ? 가 있으면 분리
+    let qIdx = file.indexOf('?');
+    if (qIdx > -1) {
+      path = DEFAULT_FOLDER + file.substring(0, qIdx) + file.substring(qIdx);
+    } else {
+      path = DEFAULT_FOLDER + file;
+    }
   }
+
+  let targetUrl = HOST + path;
 
   let body;
   if (req.method === 'POST') {
@@ -23,7 +33,7 @@ export default async function handler(req, res) {
   const forwardHeaders = {
     "User-Agent": req.headers['user-agent'] || "Mozilla/5.0",
     "Content-Type": req.headers['content-type'] || 'application/x-www-form-urlencoded',
-    "Referer": HOST + path,
+    "Referer": HOST + DEFAULT_FOLDER,
   };
   if (req.headers.cookie) forwardHeaders["Cookie"] = req.headers.cookie;
 
