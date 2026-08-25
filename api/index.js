@@ -3,32 +3,26 @@ export const config = { api: { bodyParser: false } };
 export default async function handler(req, res) {
   const HOST = "http://redx.dothome.co.kr";
   let path = req.url.replace(/^\/api/, '');
-  if (path === '') path = '/';
+  if (path === '' || path === '/') path = '/visit/';
 
-  // ?url= 파라미터가 있으면 그거 우선
   let targetUrl = req.query.url;
 
   if (!targetUrl) {
-    if (path === '/' || path === '/?' || path === '') {
+    if (path === '/' || path === '/?') {
       targetUrl = HOST + '/visit/';
     } else if (path.startsWith('/visit/') || path.startsWith('/visit?')) {
       targetUrl = HOST + path;
     } else {
-      // 무조건 /visit/ 붙이기
+      // 핵심: 파일이 뭐든 무조건 /visit/ 붙이기
       // /visit_pass2.php?code=xxx -> /visit/visit_pass2.php?code=xxx
-      if (path.startsWith('?')) {
-        targetUrl = HOST + '/visit/' + path;
-      } else {
-        // /visit_pass2.php?code=xxx
-        let qIndex = path.indexOf('?');
-        let fileOnly = qIndex > -1 ? path.substring(0, qIndex) : path;
-        let queryOnly = qIndex > -1 ? path.substring(qIndex) : '';
-        // fileOnly = /visit_pass2.php
-        if (!fileOnly.startsWith('/visit/')) {
-          fileOnly = '/visit' + fileOnly;
-        }
-        targetUrl = HOST + fileOnly + queryOnly;
+      // /apply.php -> /visit/apply.php
+      let qIdx = path.indexOf('?');
+      let fileOnly = qIdx > -1 ? path.substring(0, qIdx) : path;
+      let queryOnly = qIdx > -1 ? path.substring(qIdx) : '';
+      if (!fileOnly.startsWith('/visit/')) {
+        fileOnly = '/visit' + (fileOnly.startsWith('/') ? fileOnly : '/' + fileOnly);
       }
+      targetUrl = HOST + fileOnly + queryOnly;
     }
   }
 
@@ -42,12 +36,39 @@ export default async function handler(req, res) {
   try {
     const r = await fetch(targetUrl, {
       method: req.method,
-      headers: { "User-Agent": "Mozilla/5.0", "Content-Type": req.headers['content-type'] || 'application/x-www-form-urlencoded' },
-      body
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+        "Content-Type": req.headers['content-type'] || 'application/x-www-form-urlencoded'
+      },
+      body,
+      redirect: 'follow'
     });
     let html = await r.text();
-    // 디버그: 맨 위에 지금 어디로 요청했는지 표시
-    html = `<!-- DEBUG TARGET: ${targetUrl} -->\n` + html;
+
+    // 앱에서 새창/인쇄/뒤로가기 안되는 문제 해결 스크립트 주입
+    const fixScript = `
+    <script>
+      (function(){
+        // 새창을 현재창에서 열기
+        document.querySelectorAll('a[target="_blank"], a[target="_new"]').forEach(a=>a.target='_self');
+        var _open = window.open;
+        window.open = function(url){ window.location.href = url; return null; };
+        // 인쇄 버튼이 앱에서 안먹을 때 대비
+        document.addEventListener('click', function(e){
+          var t = e.target;
+          if(t && t.innerText && t.innerText.indexOf('인쇄')>-1){
+            setTimeout(function(){ try{ window.print(); }catch(err){} }, 100);
+          }
+        });
+      })();
+    </script>
+    `;
+    if (html.includes('</body>')) {
+      html = html.replace('</body>', fixScript + '</body>');
+    } else {
+      html = html + fixScript;
+    }
+
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(html);
   } catch (e) {
