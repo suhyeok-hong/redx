@@ -1,7 +1,8 @@
 name: Build redx APK
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
   build:
@@ -18,38 +19,27 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: 17
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+
+      - name: Build Android project
+        run: |
+          rm -rf android
+          npx cap add android
+          npx cap copy android
 
       - name: Build APK
         run: |
-          npm init -y
-          npm i @capacitor/core@5.7.4 @capacitor/cli@5.7.4 @capacitor/android@5.7.4
-          mkdir -p www
-          echo "<h1>redx loading...</h1>" > www/index.html
-
-          cat > capacitor.config.json << 'EOF'
-          {
-            "appId": "com.redx.app",
-            "appName": "redx",
-            "webDir": "www",
-            "server": {
-              "url": "https://redx-sand.vercel.app/api?url=http://redx.dothome.co.kr/visit/",
-              "cleartext": true
-            }
-          }
-          EOF
-
-          npx cap add android
-          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: redx-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/visit-rabi.apk
