@@ -5,18 +5,32 @@ export default async function handler(req, res) {
   let path = req.url.replace(/^\/api/, '');
   if (path === '') path = '/';
 
-  // 핵심: 무조건 visit 폴더로 보내기
-  // /visit_pass.php -> /visit/visit_pass.php
-  // /visit_pass2.php -> /visit/visit_pass2.php
-  // /apply.php -> /visit/apply.php
-  if (!path.startsWith('/visit/') && !path.startsWith('/visit?')) {
-    if (path.startsWith('?')) path = '/visit/' + path;
-    else if (path === '/') path = '/visit/';
-    else path = '/visit' + (path.startsWith('/')? path : '/' + path);
-  }
+  // ?url= 파라미터가 있으면 그거 우선
+  let targetUrl = req.query.url;
 
-  // ?url= 로 직접 지정되면 그걸 우선 사용
-  const targetUrl = req.query.url || (HOST + path);
+  if (!targetUrl) {
+    if (path === '/' || path === '/?' || path === '') {
+      targetUrl = HOST + '/visit/';
+    } else if (path.startsWith('/visit/') || path.startsWith('/visit?')) {
+      targetUrl = HOST + path;
+    } else {
+      // 무조건 /visit/ 붙이기
+      // /visit_pass2.php?code=xxx -> /visit/visit_pass2.php?code=xxx
+      if (path.startsWith('?')) {
+        targetUrl = HOST + '/visit/' + path;
+      } else {
+        // /visit_pass2.php?code=xxx
+        let qIndex = path.indexOf('?');
+        let fileOnly = qIndex > -1 ? path.substring(0, qIndex) : path;
+        let queryOnly = qIndex > -1 ? path.substring(qIndex) : '';
+        // fileOnly = /visit_pass2.php
+        if (!fileOnly.startsWith('/visit/')) {
+          fileOnly = '/visit' + fileOnly;
+        }
+        targetUrl = HOST + fileOnly + queryOnly;
+      }
+    }
+  }
 
   let body;
   if (req.method === 'POST') {
@@ -31,7 +45,9 @@ export default async function handler(req, res) {
       headers: { "User-Agent": "Mozilla/5.0", "Content-Type": req.headers['content-type'] || 'application/x-www-form-urlencoded' },
       body
     });
-    const html = await r.text();
+    let html = await r.text();
+    // 디버그: 맨 위에 지금 어디로 요청했는지 표시
+    html = `<!-- DEBUG TARGET: ${targetUrl} -->\n` + html;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(html);
   } catch (e) {
