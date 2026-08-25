@@ -23,15 +23,12 @@ jobs:
       - name: Install dependencies
         run: |
           npm install
-          npm install @capacitor/core@5.7.0 @capacitor/cli@5.7.0 @capacitor/android@5.7.0 @capacitor/app@5.0.8
+          npm install @capacitor/core@5.7.0 @capacitor/cli@5.7.0 @capacitor/android@5.7.0 @capacitor/app@5.0.8 @capacitor/assets@3.0.5
           mkdir -p www
           cat > www/index.html <<'HTML'
-          <!DOCTYPE html>
-          <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+          <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
           <script type="module">
-            import { Capacitor } from 'https://cdn.jsdelivr.net/npm/@capacitor/core@5.7.0/+esm';
             import { App } from 'https://cdn.jsdelivr.net/npm/@capacitor/app@5.0.8/+esm';
-            // http로 바로 이동 (뒤로가기 기록 안남기게 replace)
             if (location.href.includes('www/index.html') || location.pathname === '/' || location.pathname === '/index.html') {
                location.replace("http://redx.dothome.co.kr/trips/");
             }
@@ -39,14 +36,27 @@ jobs:
               if (canGoBack) window.history.back();
               else App.exitApp();
             });
-          </script>
-          </head><body>로딩중...</body></html>
+          </script></head><body>로딩중...</body></html>
           HTML
+          # 아이콘 설정 파일 만들기
+          mkdir -p resources
+          if [ -f icon.png ]; then cp icon.png resources/icon.png; fi
+          echo '{"iconBackgroundColor":"#ffffff","splashBackgroundColor":"#ffffff"}' > capacitor.config.json
+          cat > capacitor.config.json <<'JSON'
+          {
+            "appId": "com.redx.app",
+            "appName": "redx",
+            "webDir": "www",
+            "bundledWebRuntime": false,
+            "server": { "androidScheme": "http", "cleartext": true, "allowNavigation": ["redx.dothome.co.kr", "*.dothome.co.kr"] }
+          }
+          JSON
 
       - name: Build Android project
         run: |
           rm -rf android
           npx cap add android
+          if [ -f resources/icon.png ]; then npx capacitor-assets generate --android --iconBackgroundColor "#ffffff" --splashBackgroundColor "#ffffff"; fi
           npx cap sync android
           sed -i 's/android:supportsRtl="true"/android:supportsRtl="true" android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
 
