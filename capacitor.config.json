@@ -1,0 +1,11 @@
+{
+  "appId": "com.redx.app",
+  "appName": "redx",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://redx-sand.vercel.app",
+    "cleartext": true,
+    "androidScheme": "https"
+  }
+}
