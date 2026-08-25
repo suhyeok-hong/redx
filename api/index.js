@@ -1,36 +1,41 @@
-export const config = {
-  api: { bodyParser: false }
-};
+export const config = { api: { bodyParser: false } };
 
 export default async function handler(req, res) {
-  const BASE = "http://redx.dothome.co.kr";
-  let targetUrl = req.query.url;
+  const HOST = "http://redx.dothome.co.kr";
+  const BASE = "/visit";
 
-  if (!targetUrl) {
-    // 주소에 url= 없으면 현재 요청 경로 그대로 원본 서버로 연결
-    // /apply.php -> http://redx.dothome.co.kr/apply.php
-    // /?q=검색어 -> http://redx.dothome.co.kr/visit/?q=검색어
-    let path = req.url;
-    if (path.startsWith('/api')) path = path.replace('/api', '');
-    if (path === '' || path === '/') path = '/visit/';
-    if (path.startsWith('/?') || path.startsWith('?')) path = '/visit/' + path;
-    if (!path.startsWith('/visit/') &&!path.startsWith('/apply.php')) {
-        // /apply.php는 그대로, 그 외는 /visit/ 아래로
-        if (!path.startsWith('/')) path = '/' + path;
-    }
-    if (path.startsWith('/visit/')) {
-      targetUrl = BASE + path;
-    } else {
-      targetUrl = BASE + path;
-    }
-    // q= 검색어로만 온 경우 처리
-    if (req.query.q &&!targetUrl.includes('?')) {
-       targetUrl = BASE + "/visit/?" + req.url.split('?')[1];
+  let urlPath = req.url;
+  if (urlPath.startsWith('/api')) urlPath = urlPath.replace('/api', '');
+  if (urlPath === '' || urlPath === '/') urlPath = '/visit/';
+
+  // 핵심 수정: /apply.php -> /visit/apply.php 로 고치기
+  if (urlPath.startsWith('/apply.php')) {
+    urlPath = '/visit/apply.php' + (urlPath.includes('?')? '?' + urlPath.split('?')[1] : '');
+  } else if (!urlPath.startsWith('/visit/')) {
+    if (urlPath.startsWith('/?') || urlPath.startsWith('?')) {
+      urlPath = '/visit/' + urlPath;
+    } else if (!urlPath.startsWith('/visit')) {
+      // 다른 페이지도 전부 /visit/ 아래에 있다고 가정
+      if (urlPath.startsWith('/')) {
+        // 이미 /로 시작하면 /visit을 앞에 붙임
+        if (!urlPath.startsWith('/visit')) {
+           // /apply.php는 위에서 처리했으니 여긴 다른 파일
+        }
+      }
     }
   }
 
-  // POST 데이터 읽기
-  let body = undefined;
+  let targetUrl = req.query.url || (HOST + urlPath);
+
+  // q= 검색으로 올 때
+  if (!req.query.url && req.query.q) {
+     targetUrl = HOST + "/visit/?" + req.url.split('?')[1];
+  }
+  if (!req.query.url && urlPath === '/visit/' && req.url.includes('?')) {
+     targetUrl = HOST + "/visit/?" + req.url.split('?')[1];
+  }
+
+  let body;
   if (req.method === 'POST') {
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
@@ -40,22 +45,13 @@ export default async function handler(req, res) {
   try {
     const r = await fetch(targetUrl, {
       method: req.method,
-      headers: {
-        "User-Agent": "Mozilla/5.0",
-        "Content-Type": req.headers['content-type'] || 'application/x-www-form-urlencoded'
-      },
-      body: body,
-      redirect: 'follow'
+      headers: { "User-Agent": "Mozilla/5.0", "Content-Type": req.headers['content-type'] || 'application/x-www-form-urlencoded' },
+      body,
     });
-    let html = await r.text();
-    // 링크가 Vercel 밖으로 나가지 않게
-    html = html.replace(/http:\/\/redx\.dothome\.co\.kr\/visit\//g, '/visit/');
-    html = html.replace(/http:\/\/redx\.dothome\.co\.kr\//g, '/');
-
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    const html = await r.text();
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(html);
   } catch (e) {
-    return res.status(500).send('에러:' + e.message + ' target:' + targetUrl);
+    return res.status(500).send(e.message + " target:" + targetUrl);
   }
 }
