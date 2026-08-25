@@ -1,0 +1,55 @@
+name: Build redx APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Make WebView APK
+        run: |
+          npm init -y
+          npm i @capacitor/core @capacitor/cli @capacitor/android
+          mkdir -p www
+          echo "<html><body>Loading...</body></html>" > www/index.html
+          
+          # 여기에 네 Vercel 주소 넣어야 해요!
+          cat > capacitor.config.json << 'EOF'
+          {
+            "appId": "com.redx.app",
+            "appName": "redx",
+            "webDir": "www",
+            "server": {
+              "url": "http://redx.dothome.co.kr/visit/",
+              "cleartext": true
+            }
+          }
+          EOF
+
+          npx cap add android
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: redx-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
