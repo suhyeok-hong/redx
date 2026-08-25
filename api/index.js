@@ -3,17 +3,17 @@ export const config = { api: { bodyParser: false } };
 export default async function handler(req, res) {
   const HOST = "http://redx.dothome.co.kr";
   let path = req.url.replace(/^\/api/, '');
-  if (path === '' || path === '/') path = '/visit/';
+  if (path === '' || path === '/') path = '/trips/';
 
   let targetUrl = req.query.url;
   if (!targetUrl) {
-    if (path === '/' || path === '/?') targetUrl = HOST + '/visit/';
-    else if (path.startsWith('/visit/') || path.startsWith('/visit?')) targetUrl = HOST + path;
+    if (path === '/' || path === '/?') targetUrl = HOST + '/trips/';
+    else if (path.startsWith('/trips/') || path.startsWith('/trips?')) targetUrl = HOST + path;
     else {
       let qIdx = path.indexOf('?');
       let fileOnly = qIdx > -1 ? path.substring(0, qIdx) : path;
       let queryOnly = qIdx > -1 ? path.substring(qIdx) : '';
-      if (!fileOnly.startsWith('/visit/')) fileOnly = '/visit' + (fileOnly.startsWith('/') ? fileOnly : '/' + fileOnly);
+      if (!fileOnly.startsWith('/trips/')) fileOnly = '/trips' + (fileOnly.startsWith('/') ? fileOnly : '/' + fileOnly);
       targetUrl = HOST + fileOnly + queryOnly;
     }
   }
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
   const forwardHeaders = {
     "User-Agent": req.headers['user-agent'] || "Mozilla/5.0",
     "Content-Type": req.headers['content-type'] || 'application/x-www-form-urlencoded',
-    "Referer": HOST + "/visit/",
+    "Referer": HOST + "/trips/",
   };
   if (req.headers.cookie) forwardHeaders["Cookie"] = req.headers.cookie;
 
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
       if (loc) {
         // 닷홈 주소로 리다이렉트면 우리 주소로 바꿔서 리다이렉트
         let newLoc = loc.replace(HOST, '');
-        if (!newLoc.startsWith('/visit/') && newLoc.startsWith('/')) newLoc = '/visit' + newLoc;
+        if (!newLoc.startsWith('/trips/') && newLoc.startsWith('/')) newLoc = '/trips' + newLoc;
         return res.redirect(302, newLoc);
       }
     }
