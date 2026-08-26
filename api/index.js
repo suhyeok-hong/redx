@@ -43,7 +43,6 @@ export default async function handler(req, res) {
       if (loc) return res.redirect(302, loc.replace(HOST, ''));
     }
 
-    // ★★★ 엑셀 다운로드는 여기서 바로 리턴! HTML 가공 절대 안함!
     if (path.includes('excel_download') || path.includes('export')) {
       const contentType = r.headers.get('content-type') || 'application/octet-stream';
       const contentDispo = r.headers.get('content-disposition') || 'attachment; filename="export.csv"';
@@ -54,9 +53,24 @@ export default async function handler(req, res) {
     }
 
     let html = await r.text();
-    const fixScript = `<script>(function(){document.querySelectorAll('a[target="_blank"], a[target="_new"]').forEach(a=>{if(a.href.includes('excel_download')||a.href.includes('export'))return;a.target='_self';});window.open=function(u){if(u&&u.includes('excel_download')){window.location.href=u;return null;}window.location.href=u;return null;};})();</script>`;
-    if (html.includes('</body>')) html = html.replace('</body>', fixScript + '</body>');
-    else html = html + fixScript;
+
+    // ★★★ PWA + 기존 엑셀 수정 스크립트 같이 주입
+    const pwaInjection = `
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563eb">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js');
+  });
+}
+</script>
+<script>(function(){document.querySelectorAll('a[target="_blank"], a[target="_new"]').forEach(a=>{if(a.href.includes('excel_download')||a.href.includes('export'))return;a.target='_self';});window.open=function(u){if(u&&u.includes('excel_download')){window.location.href=u;return null;}window.location.href=u;return null;};})();</script>`;
+
+    if (html.includes('</head>')) html = html.replace('</head>', pwaInjection + '</head>');
+    else if (html.includes('</body>')) html = html.replace('</body>', pwaInjection + '</body>');
+    else html = html + pwaInjection;
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(r.status).send(html);
