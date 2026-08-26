@@ -12,7 +12,7 @@ export default async function handler(req, res) {
 
   const target = UPSTREAM + path + url.search;
 
-  // raw body 읽기 (bodyParser 끈 상태)
+  // raw body 읽기
   let body = undefined;
   if (req.method !== "GET" && req.method !== "HEAD") {
     const chunks = [];
@@ -33,11 +33,9 @@ export default async function handler(req, res) {
       redirect: "manual",
     });
 
-    // 쿠키 전달
     const setCookie = r.headers.get("set-cookie");
     if (setCookie) res.setHeader("Set-Cookie", setCookie);
 
-    // 리다이렉트 처리
     const location = r.headers.get("location");
     if (location) {
       let loc = location.replace("http://redx.dothome.co.kr/trips", "").replace("https://redx.dothome.co.kr/trips", "");
@@ -53,8 +51,11 @@ export default async function handler(req, res) {
     }
 
     let html = await r.text();
-    // 절대경로를 상대경로로 치환
     html = html.replaceAll("http://redx.dothome.co.kr/trips", "").replaceAll("https://redx.dothome.co.kr/trips", "");
+
+    // 기존 PWA 태그 제거하고 흰색으로 강제 교체
+    html = html.replace(/<link[^>]*manifest[^>]*>/gi, "");
+    html = html.replace(/<meta[^>]*theme-color[^>]*>/gi, "");
 
     const pwaTags = `
 <link rel="manifest" href="/manifest.json">
@@ -63,11 +64,9 @@ export default async function handler(req, res) {
 <link rel="apple-touch-icon" href="/icon-512.png">
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}</script>
 `;
-    if (!html.toLowerCase().includes("manifest.json")) {
-      html = html.toLowerCase().includes("</head>")
-        ? html.replace(/<\/head>/i, pwaTags + "</head>")
-        : pwaTags + html;
-    }
+    html = html.toLowerCase().includes("</head>")
+      ? html.replace(/<\/head>/i, pwaTags + "</head>")
+      : pwaTags + html;
 
     res.setHeader("Content-Type", "text/html; charset=utf-8").status(200).send(html);
   } catch (e) {
