@@ -12,7 +12,6 @@ export default async function handler(req, res) {
 
   const target = UPSTREAM + path + url.search;
 
-  // raw body 읽기
   let body = undefined;
   if (req.method !== "GET" && req.method !== "HEAD") {
     const chunks = [];
@@ -52,8 +51,6 @@ export default async function handler(req, res) {
 
     let html = await r.text();
     html = html.replaceAll("http://redx.dothome.co.kr/trips", "").replaceAll("https://redx.dothome.co.kr/trips", "");
-
-    // 기존 PWA 태그 제거하고 흰색으로 강제 교체
     html = html.replace(/<link[^>]*manifest[^>]*>/gi, "");
     html = html.replace(/<meta[^>]*theme-color[^>]*>/gi, "");
 
@@ -62,7 +59,30 @@ export default async function handler(req, res) {
 <meta name="theme-color" content="#ffffff">
 <link rel="icon" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-512.png">
-<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}</script>
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}
+
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // 기존 버튼 있으면 중복 생성 방지
+  if(document.getElementById('pwa-install-btn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'pwa-install-btn';
+  btn.innerText = '📲 앱 설치하기';
+  btn.style = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999;padding:14px 28px;background:#111;color:#fff;border-radius:28px;border:none;font-size:16px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.3);';
+  btn.onclick = async () => {
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      btn.remove();
+    }
+  };
+  document.body.appendChild(btn);
+});
+</script>
 `;
     html = html.toLowerCase().includes("</head>")
       ? html.replace(/<\/head>/i, pwaTags + "</head>")
