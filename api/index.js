@@ -1,80 +1,69 @@
-export const config = { api: { bodyParser: false } };
-
+// api/index.js - RedX Trip PWA 최종본
 export default async function handler(req, res) {
-  const HOST = "http://redx.dothome.co.kr";
-  const DEFAULT_FOLDER = "/trips/";
+  const UPSTREAM = "https://script.google.com/macros/s/AKfycbz.../exec"; // <-- 여기에 너 구글 앱스스크립트 주소 넣어야함. 원래 쓰던거 그대로 복사
 
-  let path = req.url.replace(/^\/api/, '');
-  if (path === '' || path === '/') path = DEFAULT_FOLDER;
-  if (path.endsWith('/')) path = path + 'index.php';
+  // 쿼리 유지해서 프록시
+  const url = new URL(req.url, `https://${req.headers.host}`);
+  const targetUrl = UPSTREAM + url.search + (url.search ? "&" : "?") + "path=" + url.pathname;
 
-  if (!path.startsWith(DEFAULT_FOLDER) && !path.startsWith('/trips/') && !path.startsWith('/visit/')) {
-    let file = path.startsWith('/') ? path.substring(1) : path;
-    let qIdx = file.indexOf('?');
-    if (qIdx > -1) path = DEFAULT_FOLDER + file.substring(0, qIdx) + file.substring(qIdx);
-    else path = DEFAULT_FOLDER + file;
+  const upstreamRes = await fetch(targetUrl, {
+    method: req.method,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: req.method !== "GET" && req.method !== "HEAD" ? JSON.stringify(req.body) : undefined,
+    redirect: "follow",
+  });
+
+  const contentType = upstreamRes.headers.get("content-type") || "";
+
+  // HTML이 아니면 그대로 전달 (API JSON 등)
+  if (!contentType.includes("text/html")) {
+    const data = await upstreamRes.arrayBuffer();
+    res.status(upstreamRes.status);
+    res.setHeader("Content-Type", contentType);
+    return res.send(Buffer.from(data));
   }
 
-  let targetUrl = HOST + path;
-  let body;
-  if (req.method === 'POST') {
-    const chunks = [];
-    for await (const chunk of req) chunks.push(chunk);
-    body = Buffer.concat(chunks);
-  }
+  // HTML이면 PWA 태그 주입
+  let html = await upstreamRes.text();
 
-  const forwardHeaders = {
-    "User-Agent": req.headers['user-agent'] || "Mozilla/5.0",
-    "Referer": HOST + DEFAULT_FOLDER,
-  };
-  if (req.headers['content-type']) forwardHeaders["Content-Type"] = req.headers['content-type'];
-  if (req.headers.cookie) forwardHeaders["Cookie"] = req.headers.cookie;
-
-  try {
-    const r = await fetch(targetUrl, { method: req.method, headers: forwardHeaders, body, redirect: 'manual' });
-    
-    const setCookie = r.headers.getSetCookie ? r.headers.getSetCookie() : r.headers.get('set-cookie');
-    if (setCookie) {
-      if (Array.isArray(setCookie)) setCookie.forEach(c => res.appendHeader('Set-Cookie', c));
-      else res.setHeader('Set-Cookie', setCookie);
-    }
-    if (r.status >= 300 && r.status < 400) {
-      const loc = r.headers.get('location');
-      if (loc) return res.redirect(302, loc.replace(HOST, ''));
-    }
-
-    if (path.includes('excel_download') || path.includes('export')) {
-      const contentType = r.headers.get('content-type') || 'application/octet-stream';
-      const contentDispo = r.headers.get('content-disposition') || 'attachment; filename="export.csv"';
-      res.setHeader('Content-Type', contentType);
-      res.setHeader('Content-Disposition', contentDispo);
-      const buffer = Buffer.from(await r.arrayBuffer());
-      return res.status(r.status).send(buffer);
-    }
-
-    let html = await r.text();
-
-    // ★★★ PWA + 기존 엑셀 수정 스크립트 같이 주입
-    const pwaInjection = `
+  // 1. PWA manifest + theme + 아이콘 주입
+  if (!html.includes("manifest.json")) {
+    html = html.replace("</head>", `
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#2563eb">
+<meta name="theme-color" content="#4f0e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <script>
-if ('serviceWorker' in navigator) {
+if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js');
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
   });
 }
 </script>
-<script>(function(){document.querySelectorAll('a[target="_blank"], a[target="_new"]').forEach(a=>{if(a.href.includes('excel_download')||a.href.includes('export'))return;a.target='_self';});window.open=function(u){if(u&&u.includes('excel_download')){window.location.href=u;return null;}window.location.href=u;return null;};})();</script>`;
-
-    if (html.includes('</head>')) html = html.replace('</head>', pwaInjection + '</head>');
-    else if (html.includes('</body>')) html = html.replace('</body>', pwaInjection + '</body>');
-    else html = html + pwaInjection;
-
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.status(r.status).send(html);
-  } catch (e) {
-    return res.status(500).send(e.message + " target:" + targetUrl);
+</head>`);
   }
+
+  // 2. 엑셀 다운로드 보호 (네가 쓰던 스크립트 유지)
+  const protectScript = `
+<script>
+document.addEventListener('click', function(e){
+  const a = e.target.closest('a');
+  if(a && a.href && (a.href.includes('.xlsx') || a.href.includes('export') || a.href.includes('download'))){
+    e.preventDefault();
+    alert('다운로드는 PC 관리자 모드에서만 가능합니다.');
+  }
+});
+</script>
+`;
+
+  html = html.replace("</body>", protectScript + "</body>");
+
+  res.status(200);
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache");
+  return res.send(html);
 }
