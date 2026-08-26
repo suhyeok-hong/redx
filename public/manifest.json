@@ -1,12 +1,21 @@
 {
-  "name": "여행 관리 서비스",
-  "short_name": "여행관리",
+  "name": "redX Trip",
+  "short_name": "redX Trip",
+  "description": "redX Trip 여행 관리 서비스",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#4a0a18",
+  "theme_color": "#4a0a18",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ]
 }
