@@ -1,7 +1,7 @@
 {
   "name": "redX Trip",
   "short_name": "redX Trip",
-  "start_url": "/",
+  "start_url": "/?v=1",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
