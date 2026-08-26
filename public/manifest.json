@@ -1,7 +1,7 @@
 {
-  "name": "redX Trip",
-  "short_name": "redX Trip",
-  "start_url": "/?v=1",
+  "name": "여행 관리 서비스",
+  "short_name": "여행관리",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
