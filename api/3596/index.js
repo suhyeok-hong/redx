@@ -1,5 +1,5 @@
 const CODE = "3596";
-const TARGET = "http://3596.trips.kro.kr";
+const TARGET = "https://redx-sand.vercel.app/?url=http://redx.dothome.co.kr/trips/trips_list.php?id=RBTgoESuYbK45OCp";
 const SCOPE = `/${CODE}/`;
 
 export default function handler(req, res) {
