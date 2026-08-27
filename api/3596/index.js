@@ -1,10 +1,9 @@
 const CODE = "3596";
-const TARGET = "https://3596.trips.kro.kr";
+const TARGET = "http://3596.trips.kro.kr";
 const SCOPE = `/${CODE}/`;
 
 export default function handler(req, res) {
   const url = (req.url || "");
-
   if (url.includes("manifest.json")) {
     res.setHeader("Content-Type", "application/manifest+json");
     return res.status(200).send(JSON.stringify({
@@ -18,12 +17,10 @@ export default function handler(req, res) {
       icons: [{ src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" }]
     }));
   }
-
   if (url.includes("sw.js")) {
     res.setHeader("Content-Type", "application/javascript");
     return res.status(200).send(`self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());`);
   }
-
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   return res.status(200).send(`<!DOCTYPE html>
 <html lang="ko"><head>
@@ -31,11 +28,9 @@ export default function handler(req, res) {
 <title>Trip ${CODE}</title>
 <link rel="manifest" href="/${CODE}/manifest.json">
 <meta name="theme-color" content="#ffffff">
-<link rel="icon" href="/icon-192.png">
 <style>
 body{margin:0;background:#fff;color:#000;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:20px}
-h1{font-size:28px;margin:10px 0}
-button{background:#4a0a18;color:#fff;border:0;padding:16px 32px;border-radius:12px;font-size:18px;font-weight:bold;margin-top:20px;cursor:pointer}
+#installBtn{display:block !important;background:#4a0a18;color:#fff;border:0;padding:18px 36px;border-radius:12px;font-size:20px;font-weight:bold;margin-top:24px;cursor:pointer}
 </style>
 <script>
 if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || new URLSearchParams(location.search).has('pwa')) {
@@ -49,20 +44,15 @@ if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.
 <button id="installBtn">앱 설치하기</button>
 <script>
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/${CODE}/sw.js',{scope:'/${CODE}/'});
-let deferredPrompt;
-const btn = document.getElementById('installBtn');
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  btn.style.display='block';
-});
-btn.addEventListener('click', async () => {
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt=e; });
+document.getElementById('installBtn').addEventListener('click', async () => {
   if(deferredPrompt){
     deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    deferredPrompt = null;
+    const r = await deferredPrompt.userChoice;
+    deferredPrompt=null;
   } else {
-    alert('브라우저 메뉴에서 [홈 화면에 추가] 또는 [앱 설치]를 눌러주세요');
+    alert('우측 상단 점3개 메뉴 > [홈 화면에 추가] 또는 [앱 설치]를 눌러주세요');
   }
 });
 </script>
