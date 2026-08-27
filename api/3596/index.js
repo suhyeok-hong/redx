@@ -1,5 +1,5 @@
 const CODE = "3596";
-const TARGET = "https://3596.trips.kro.kr";
+const TARGET = "http://3596.trips.kro.kr";
 const SCOPE = `/${CODE}/`;
 
 export default function handler(req, res) {
@@ -48,8 +48,6 @@ if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.
 <h1>redX Trip ${CODE}</h1>
 <p>PWA 설치가 가능합니다</p>
 <button id="installBtn" style="display:none">앱 설치하기</button>
-<button onclick="location.href='${TARGET}'" style="background:#eee;color:#000;margin-top:12px">사이트로 이동</button>
-<small style="opacity:.6;margin-top:12px">${TARGET}</small>
 <script>
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/${CODE}/sw.js',{scope:'/${CODE}/'});
 let deferredPrompt;
