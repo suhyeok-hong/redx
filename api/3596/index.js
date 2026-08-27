@@ -10,7 +10,7 @@ export default function handler(req, res) {
     return res.status(200).send(JSON.stringify({
       name: `redX Trip ${CODE}`,
       short_name: `Trip ${CODE}`,
-      start_url: SCOPE,
+      start_url: `${SCOPE}?pwa=1`,
       scope: SCOPE,
       display: "standalone",
       background_color: "#ffffff",
@@ -33,27 +33,33 @@ export default function handler(req, res) {
 <meta name="theme-color" content="#ffffff">
 <link rel="icon" href="/icon-192.png">
 <style>
-body{margin:0;background:#ffffff;color:#000000;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:20px}
+body{margin:0;background:#fff;color:#000;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:20px}
 h1{font-size:28px;margin:10px 0}
 button{background:#4a0a18;color:#fff;border:0;padding:16px 32px;border-radius:12px;font-size:18px;font-weight:bold;margin-top:20px;cursor:pointer}
-small{opacity:0.6;margin-top:12px}
 </style>
+<script>
+// ★ 설치된 앱으로 실행됐으면 바로 3596으로 이동
+if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || new URLSearchParams(location.search).has('pwa')) {
+  location.replace("${TARGET}");
+}
+</script>
 </head><body>
 <img src="/icon-192.png" style="width:96px;border-radius:24px">
 <h1>redX Trip ${CODE}</h1>
 <p>PWA 설치가 가능합니다</p>
 <button id="installBtn" style="display:none">앱 설치하기</button>
 <button onclick="location.href='${TARGET}'" style="background:#eee;color:#000;margin-top:12px">사이트로 이동</button>
-<small>${TARGET}</small>
+<small style="opacity:.6;margin-top:12px">${TARGET}</small>
 <script>
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/${CODE}/sw.js',{scope:'/${CODE}/'});
 let deferredPrompt;
+const btn = document.getElementById('installBtn');
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  document.getElementById('installBtn').style.display='block';
+  btn.style.display='block';
 });
-document.getElementById('installBtn').addEventListener('click', async () => {
+btn.addEventListener('click', async () => {
   if(!deferredPrompt) return;
   deferredPrompt.prompt();
   await deferredPrompt.userChoice;
