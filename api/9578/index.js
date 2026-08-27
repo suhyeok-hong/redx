@@ -1,5 +1,5 @@
 const CODE = "9578";
-const TARGET = "https://9578.trips.kro.kr";
+const TARGET = "http://9578.trips.kro.kr";
 const SCOPE = `/${CODE}/`;
 
 export default function handler(req, res) {
