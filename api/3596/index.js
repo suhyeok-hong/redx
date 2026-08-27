@@ -1,5 +1,5 @@
 const CODE = "3596";
-const TARGET = "http://3596.trips.kro.kr";
+const TARGET = "https://3596.trips.kro.kr";
 const SCOPE = `/${CODE}/`;
 
 export default function handler(req, res) {
@@ -38,7 +38,6 @@ h1{font-size:28px;margin:10px 0}
 button{background:#4a0a18;color:#fff;border:0;padding:16px 32px;border-radius:12px;font-size:18px;font-weight:bold;margin-top:20px;cursor:pointer}
 </style>
 <script>
-// ★ 설치된 앱으로 실행됐으면 바로 3596으로 이동
 if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || new URLSearchParams(location.search).has('pwa')) {
   location.replace("${TARGET}");
 }
@@ -47,7 +46,7 @@ if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.
 <img src="/icon-192.png" style="width:96px;border-radius:24px">
 <h1>redX Trip ${CODE}</h1>
 <p>PWA 설치가 가능합니다</p>
-<button id="installBtn" style="display:none">앱 설치하기</button>
+<button id="installBtn">앱 설치하기</button>
 <script>
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/${CODE}/sw.js',{scope:'/${CODE}/'});
 let deferredPrompt;
@@ -58,10 +57,13 @@ window.addEventListener('beforeinstallprompt', (e) => {
   btn.style.display='block';
 });
 btn.addEventListener('click', async () => {
-  if(!deferredPrompt) return;
-  deferredPrompt.prompt();
-  await deferredPrompt.userChoice;
-  deferredPrompt = null;
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+  } else {
+    alert('브라우저 메뉴에서 [홈 화면에 추가] 또는 [앱 설치]를 눌러주세요');
+  }
 });
 </script>
 </body></html>`);
