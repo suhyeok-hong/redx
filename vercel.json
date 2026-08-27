@@ -1,11 +1,8 @@
 {
   "rewrites": [
-    { "source": "/3596", "destination": "/api/3596" },
-    { "source": "/3596/", "destination": "/api/3596" },
-    { "source": "/3596/:path*", "destination": "/api/3596" },
-    { "source": "/9578", "destination": "/api/9578" },
-    { "source": "/9578/", "destination": "/api/9578" },
-    { "source": "/9578/:path*", "destination": "/api/9578" },
+    { "source": "/:code", "destination": "/api/:code" },
+    { "source": "/:code/", "destination": "/api/:code" },
+    { "source": "/:code/:path*", "destination": "/api/:code" },
     { "source": "/(.*)", "destination": "/api" }
   ]
 }
