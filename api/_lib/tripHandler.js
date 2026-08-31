@@ -2,7 +2,10 @@
 export function createTripHandler(CODE){
   return async function handler(req, res){
     const url = req.url || "";
-
+    const queryFile = req.query?.file || ""; // vercel이 넣어주는 file 파라미터
+    const isManifest = fullUrl.includes("manifest.json") || queryFile.includes("manifest");
+    const isSW = fullUrl.includes("sw.js") || queryFile.includes("sw.js");
+      
     // manifest
     if(url.includes("manifest.json")){
       res.setHeader("Content-Type","application/manifest+json");
