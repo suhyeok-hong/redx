@@ -1,17 +1,15 @@
 {
   "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/:path*" },
     { "source": "/sw.js", "destination": "/sw.js" },
     { "source": "/manifest.json", "destination": "/manifest.json" },
-    { "source": "/workbox-:file*", "destination": "/workbox-:file*" },
-
+    { "source": "/workbox-:path*", "destination": "/workbox-:path*" },
     { "source": "/api/trips_proxy", "destination": "/api/trips_proxy.js" },
     { "source": "/trips/:file*", "destination": "/api/trips_proxy?file=:file" },
-    { "source": "/:file((?!api/|sw.js|manifest.json|workbox).+\\.php)", "destination": "/api/trips_proxy?file=:file" },
-
-    { "source": "/:code(\\d{4})/:path*", "destination": "/api/:code" },
-    { "source": "/:code(\\d{4})", "destination": "/api/:code" },
-    { "source": "/:code(\\d{4})/", "destination": "/api/:code" },
-
+    { "source": "/:code(\\d{4})", "destination": "/api/:code?code=:code" },
+    { "source": "/:code(\\d{4})/", "destination": "/api/:code?code=:code" },
+    { "source": "/:code(\\d{4})/:path*", "destination": "/api/:code?code=:code" },
+    { "source": "/:file((?!api/|sw.js|manifest|workbox).+\\.php)", "destination": "/api/trips_proxy?file=:file" },
     { "source": "/(.*)", "destination": "/api/index.js" }
   ]
 }
