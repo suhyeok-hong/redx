@@ -11,8 +11,13 @@ export default async function handler(req,res){
   (r.headers.getSetCookie?.()||[]).forEach(c=>{
     res.appendHeader('Set-Cookie', c.replace(/Path=[^;]*/i,'Path=/').replace(/Domain=[^;]*/i,'').replace(/SameSite=[^;]*/i,''));
   });
-  // Location 헤더도 Vercel용으로 변환
-  const loc=r.headers.get('location');
-  if(loc) res.setHeader('Location', '/');
-  res.status(r.status).setHeader('Content-Type', r.headers.get('content-type')||'application/json').send(t);
+  let loc=r.headers.get('location');
+  if(loc){
+    // trips_list.php?id=xxx -> /trips_list.php?id=xxx
+    if(!loc.startsWith('http')) loc = '/'+loc.replace(/^\/+/,'').replace('trips/','');
+    res.setHeader('Location', loc);
+    res.status(302).end();
+    return;
+  }
+  res.status(r.status).setHeader('Content-Type', r.headers.get('content-type')||'text/html').send(t);
 }
