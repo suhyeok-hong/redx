@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 
     console.log('cleanBody:', cleanBody);
 
-    const r = await fetch('http://redx.trips.kro.kr/check_user_otp_status.php', {
+    const r = await fetch('http://redx.dothome.co.kr/trips/check_user_otp_status.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
       body: cleanBody
