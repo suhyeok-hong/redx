@@ -9,13 +9,13 @@ export default async function handler(req,res){
   });
   const t=await r.text();
   (r.headers.getSetCookie?.()||[]).forEach(c=>{
-    res.appendHeader('Set-Cookie', c.replace(/Path=[^;]*/i,'Path=/').replace(/Domain=[^;]*/i,'').replace(/SameSite=[^;]*/i,''));
+    res.appendHeader('Set-Cookie', c.replace(/Path=[^;]*/i,'Path=/').replace(/Domain=[^;]*/i,''));
   });
-  let loc=r.headers.get('location');
+  const loc = r.headers.get('location'); // 예: trips_list.php?id=AbCd1234
   if(loc){
-    // trips_list.php?id=xxx -> /trips_list.php?id=xxx
-    if(!loc.startsWith('http')) loc = '/'+loc.replace(/^\/+/,'').replace('trips/','');
-    res.setHeader('Location', loc);
+    // 상대경로면 그대로 / 붙여서 Vercel 경로로
+    const finalLoc = loc.startsWith('http') ? loc : '/'+loc.replace(/^\.?\//,'');
+    res.setHeader('Location', finalLoc);
     res.status(302).end();
     return;
   }
