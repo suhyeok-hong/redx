@@ -3,7 +3,7 @@ export default async function handler(req, res) {
   const buffers = [];
   for await (const chunk of req) buffers.push(chunk);
   rawBody = Buffer.concat(buffers).toString();
-  const r = await fetch('http://redx.trips.kro.kr/verify_otp.php', {
+  const r = await fetch('http://redx.dothome.co.kr/trips/verify_otp.php', {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/x-www-form-urlencoded',
