@@ -2,10 +2,13 @@
   "name": "redx-proxy",
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": { "start": "node index.js" },
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "express": "^4.18.2",
     "axios": "^1.6.0",
+    "http-proxy-middleware": "^2.0.6",
     "@simplewebauthn/server": "^8.3.7",
     "@simplewebauthn/browser": "^8.3.7"
   }
