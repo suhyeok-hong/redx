@@ -1,6 +1,8 @@
 {
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
+    { "source": "/:code(\\d{4})/manifest.json", "destination": "/api/manifest?code=:code" },
+    { "source": "/:code(\\d{4})/sw.js", "destination": "/sw.js" },
     { "source": "/sw.js", "destination": "/sw.js" },
     { "source": "/manifest.json", "destination": "/manifest.json" },
     { "source": "/workbox-:path*", "destination": "/workbox-:path*" },
