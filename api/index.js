@@ -6,18 +6,28 @@ const TARGET = "http://redx.trips.kro.kr";
 
 app.use(express.json());
 
-// PWA
-app.get('/manifest.json', (req,res)=> res.json({ name:"redX Trip", short_name:"redX Trip", start_url:"/", display:"standalone", background_color:"#ffffff", theme_color:"#ffffff", icons:[{src:"/icon-192.png", sizes:"192x192", type:"image/png"}] }));
-app.get('/sw.js', (req,res)=> res.type('js').send(`self.addEventListener('install',e=>self.skipWaiting());`));
-
-// 프록시 - 쿠키 도메인 재작성 핵심
 app.use('/', createProxyMiddleware({
   target: TARGET,
   changeOrigin: true,
-  cookieDomainRewrite: { "*": "" }, // ★ 이게 핵심: 원본 도메인 쿠키를 vercel.app용으로 바꿔줌
-  onProxyReq: (proxyReq, req) => {
-    // 원본이 http라서 https로 오는 요청을 http로 속여줌
-    proxyReq.setHeader('X-Forwarded-Proto', 'http');
+  selfHandleResponse: false, // 직접 응답 조작 안함
+  cookieDomainRewrite: { "*": "" },
+  onProxyRes: (proxyRes, req, res) => {
+    // 원본이 http라서 Secure 쿠키를 https에서도 쓸 수 있게 강제 재작성
+    const setCookie = proxyRes.headers['set-cookie'];
+    if (setCookie) {
+      const newCookies = setCookie.map(c => 
+        c.replace(/Domain=[^;]+;?/gi, '')
+         .replace(/Secure;?/gi, '')
+         .replace(/SameSite=[^;]+;?/gi, 'SameSite=Lax;')
+      );
+      proxyRes.headers['set-cookie'] = newCookies;
+      console.log('Set-Cookie rewrite:', newCookies);
+    }
+    console.log(`[PROXY] ${req.method} ${req.url} -> ${proxyRes.statusCode}`);
+  },
+  onError: (err, req, res) => {
+    console.error('Proxy Error:', err.message);
+    res.status(500).send('Proxy Error: ' + err.message);
   }
 }));
 
