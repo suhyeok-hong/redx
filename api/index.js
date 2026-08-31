@@ -9,7 +9,14 @@ export default async function handler(req, res) {
     body: ['GET','HEAD'].includes(req.method)?undefined:raw,
     redirect:'manual'
   });
-  const text=await r.text();
+  let text=await r.text();
+
+  // ★ 추가: rp.id를 현재 접속 도메인으로 강제 치환
+  const currentHost = req.headers.host; // redx-sand.vercel.app
+  text = text.replace(/redx\.dothome\.co\.kr/g, currentHost);
+  text = text.replace(/trips\.kro\.kr/g, currentHost);
+  text = text.replace(/redx\.trips\.kro\.kr/g, currentHost);
+
   const cookies = r.headers.getSetCookie?.()||[];
   cookies.forEach(c=>{
     let fixed = c.replace(/Path=[^;]*/i, 'Path=/').replace(/Domain=[^;]*/i, '');
