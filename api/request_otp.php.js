@@ -1,13 +1,14 @@
+export const config = { api: { bodyParser: false } };
 export default async function handler(req, res) {
-  let rawBody = '';
-  const buffers = [];
-  for await (const chunk of req) buffers.push(chunk);
-  rawBody = Buffer.concat(buffers).toString();
-  const r = await fetch('http://redx.dothome.co.kr/trips/request_otp.php', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: rawBody
+  const bufs=[]; for await(const c of req) bufs.push(c);
+  const raw=Buffer.concat(bufs).toString();
+  const p=new URLSearchParams(raw);
+  const body=`name=${encodeURIComponent(p.get('name')||'')}&telnum=${encodeURIComponent(p.get('telnum')||'')}`;
+  const r=await fetch('http://redx.dothome.co.kr/trips/request_otp.php',{
+    method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8', Cookie:req.headers.cookie||''}, body
   });
-  const text = await r.text();
-  res.status(r.status).setHeader('Content-Type', 'application/json').send(text);
+  const text=await r.text();
+  const sc=r.headers.getSetCookie?r.headers.getSetCookie():[r.headers.get('set-cookie')].filter(Boolean);
+  sc.forEach(c=>c&&res.appendHeader('Set-Cookie',c));
+  res.status(200).setHeader('Content-Type', r.headers.get('content-type')||'application/json; charset=utf-8').send(text);
 }
