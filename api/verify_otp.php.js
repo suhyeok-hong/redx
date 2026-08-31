@@ -1,20 +1,13 @@
+export const config = { api: { bodyParser: false } };
 export default async function handler(req, res) {
-  let rawBody = '';
-  const buffers = [];
-  for await (const chunk of req) buffers.push(chunk);
-  rawBody = Buffer.concat(buffers).toString();
-  const r = await fetch('http://redx.dothome.co.kr/trips/verify_otp.php', {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Cookie': req.headers.cookie || ''
-    },
-    body: rawBody,
-    redirect: 'manual'
+  const bufs=[]; for await(const c of req) bufs.push(c);
+  const raw=Buffer.concat(bufs).toString();
+  const r=await fetch('http://redx.dothome.co.kr/trips/verify_otp.php',{
+    method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8', Cookie:req.headers.cookie||''}, body:raw
   });
-  // 쿠키 전달
-  const setCookie = r.headers.get('set-cookie');
-  if(setCookie) res.setHeader('set-cookie', setCookie.replace(/Domain=[^;]+;?/gi,'').replace(/Secure;?/gi,''));
-  const text = await r.text();
-  res.status(r.status).setHeader('Content-Type', r.headers.get('content-type') || 'text/html').send(text);
+  const text=await r.text();
+  const sc=r.headers.getSetCookie?r.headers.getSetCookie():[r.headers.get('set-cookie')].filter(Boolean);
+  sc.forEach(c=>c&&res.appendHeader('Set-Cookie',c));
+  // 원본이 리다이렉트면 그대로 전달
+  res.status(r.status).setHeader('Content-Type', r.headers.get('content-type')||'text/html; charset=utf-8').send(text);
 }
