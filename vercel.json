@@ -1,8 +1,5 @@
 {
   "rewrites": [
-    { "source": "/check_user_otp_status.php", "destination": "http://redx.trips.kro.kr/check_user_otp_status.php" },
-    { "source": "/request_otp.php", "destination": "http://redx.trips.kro.kr/request_otp.php" },
-    { "source": "/verify_otp.php", "destination": "http://redx.trips.kro.kr/verify_otp.php" },
     { "source": "/:code", "destination": "/api/:code" },
     { "source": "/:code/", "destination": "/api/:code" },
     { "source": "/:code/:path*", "destination": "/api/:code" },
