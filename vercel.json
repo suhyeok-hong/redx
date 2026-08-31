@@ -1,8 +1,11 @@
 {
-  "rewrites": [
-    { "source": "/api/trips_proxy", "destination": "/api/trips_proxy.js" },
-    { "source": "/trips/:file*", "destination": "/api/trips_proxy?file=:file" },
-    { "source": "/:file((?!api/).+\\.php)", "destination": "/api/trips_proxy?file=:file" },
-    { "source": "/(.*)", "destination": "/api/index.js" }
-  ]
+"rewrites": [
+{ "source": "/api/trips_proxy", "destination": "/api/trips_proxy.js" },
+{ "source": "/trips/:file*", "destination": "/api/trips_proxy?file=:file" },
+{ "source": "/:file((?!api/).+\.php)", "destination": "/api/trips_proxy?file=:file" },
+{ "source": "/:code", "destination": "/api/:code" },
+{ "source": "/:code/", "destination": "/api/:code" },
+{ "source": "/:code/:path*", "destination": "/api/:code" },
+{ "source": "/(.*)", "destination": "/api/index.js" }
+ ]
 }
