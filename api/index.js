@@ -4,30 +4,27 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
 const TARGET = "http://redx.trips.kro.kr";
 
-app.use(express.json());
+// ★ 중요: express.json()을 전역으로 쓰면 POST가 잘림. WebAuthn API에만 적용
+app.post('/api/webauthn/*', express.json(), (req,res,next)=>next());
 
+app.get('/manifest.json', (req,res)=> res.json({ 
+  name:"redX Trip", short_name:"redX Trip", start_url:"/", display:"standalone",
+  background_color:"#ffffff", theme_color:"#2196F3",
+  icons:[{src:"/icon-192.png", sizes:"192x192", type:"image/png"}]
+}));
+app.get('/sw.js', (req,res)=> res.type('js').send(`self.addEventListener('install',e=>self.skipWaiting());`));
+
+// 모든 PHP 요청은 그대로 프록시 - body를 절대 건드리지 않음
 app.use('/', createProxyMiddleware({
   target: TARGET,
   changeOrigin: true,
-  selfHandleResponse: false, // 직접 응답 조작 안함
   cookieDomainRewrite: { "*": "" },
   onProxyRes: (proxyRes, req, res) => {
-    // 원본이 http라서 Secure 쿠키를 https에서도 쓸 수 있게 강제 재작성
-    const setCookie = proxyRes.headers['set-cookie'];
-    if (setCookie) {
-      const newCookies = setCookie.map(c => 
-        c.replace(/Domain=[^;]+;?/gi, '')
-         .replace(/Secure;?/gi, '')
-         .replace(/SameSite=[^;]+;?/gi, 'SameSite=Lax;')
-      );
-      proxyRes.headers['set-cookie'] = newCookies;
-      console.log('Set-Cookie rewrite:', newCookies);
+    // http 쿠키를 https에서 쓸 수 있게 Secure 제거
+    const sc = proxyRes.headers['set-cookie'];
+    if (sc) {
+      proxyRes.headers['set-cookie'] = sc.map(c => c.replace(/Domain=[^;]+;?/gi,'').replace(/Secure;?/gi,'').replace(/SameSite=[^;]+;?/gi,'SameSite=Lax;'));
     }
-    console.log(`[PROXY] ${req.method} ${req.url} -> ${proxyRes.statusCode}`);
-  },
-  onError: (err, req, res) => {
-    console.error('Proxy Error:', err.message);
-    res.status(500).send('Proxy Error: ' + err.message);
   }
 }));
 
