@@ -9,13 +9,16 @@ export default async function handler(req, res) {
     redirect:'manual'
   });
   const text=await r.text();
-  const sc = r.headers.getSetCookie? r.headers.getSetCookie() : [];
-  sc.forEach(c=>res.appendHeader('Set-Cookie', c));
+  const cookies = r.headers.getSetCookie?.()||[];
+  cookies.forEach(c=>{
+    let fixed = c.replace(/Path=[^;]*/i, 'Path=/').replace(/Domain=[^;]*/i, '');
+    res.appendHeader('Set-Cookie', fixed);
+  });
   const loc = r.headers.get('location');
   if(loc){
-    // 도메인 바꿔서 Vercel로 리다이렉트
-    const newLoc = loc.replace('http://redx.dothome.co.kr/trips/', 'https://redx-sand.vercel.app/').replace('/trips/', '/');
-    res.setHeader('Location', newLoc);
+    res.setHeader('Location', loc.includes('/trips/')? loc.split('/trips/').pop().split('/').pop().replace('index.php','') || '/' : '/');
+    // 항상 메인으로 보내기
+    res.setHeader('Location','/');
   }
-  res.status(r.status).setHeader('Content-Type', r.headers.get('content-type')||'text/html; charset=utf-8').send(text);
+  res.status(loc?302:r.status).setHeader('Content-Type', r.headers.get('content-type')||'text/html').send(text);
 }
