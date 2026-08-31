@@ -2,7 +2,7 @@ const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
-const TARGET = "http://redx.trips.kro.kr";
+const TARGET = "http://redx.dothome.co.kr/trips/";
 
 // ★ 중요: express.json()을 전역으로 쓰면 POST가 잘림. WebAuthn API에만 적용
 app.post('/api/webauthn/*', express.json(), (req,res,next)=>next());
