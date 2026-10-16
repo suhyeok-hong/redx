@@ -37,7 +37,7 @@ export default function handler(req, res) {
     res.setHeader("Content-Type", "application/manifest+json");
     const isKaya = lower.startsWith('k');
     return res.status(200).send(JSON.stringify({
-      id: `${scope}?pwa=1`,
+      id: `${scope}?pwa=1&v1`,
       name: isKaya ? `Kaya Tours ${displayCode}` : (lower.startsWith('t') ? `RTrip ${displayCode}` : `redX Trip ${code}`),
       short_name: isKaya ? `Kaya ${displayCode}` : (lower.startsWith('t') ? `RT ${displayCode}` : `redX ${code}`),
       start_url: `${scope}?pwa=1`,
