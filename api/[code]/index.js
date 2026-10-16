@@ -16,13 +16,13 @@ export default function handler(req, res) {
     target = `http://${displayCode}.kaya.kro.kr`;
     manifestName = "manifest_kaya.json";
     icon = "/kaya-512.png";
-    themeColor = "#0000ff";
+    themeColor = "#000000";
   } else if (lower.startsWith('t')) {
     displayCode = code.replace(/^t+/i, "");
     target = `http://${lower}.trips.kro.kr`;
     manifestName = "manifest.json";
     icon = "/rt-512.png";
-    themeColor = "#000000";
+    themeColor = "#f00000";
   } else {
     displayCode = code;
     target = `http://${code}.trips.kro.kr`;
