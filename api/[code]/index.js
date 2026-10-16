@@ -25,7 +25,7 @@ export default function handler(req, res) {
     themeColor = "#000000";
   } else {
     displayCode = code;
-    target = `http://${code}.tirps.kro.kr`;
+    target = `http://${code}.trips.kro.kr`;
     manifestName = "manifest.json";
     icon = "/icon-512.png";
     themeColor = "#4a0a18";
