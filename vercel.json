@@ -1,8 +1,9 @@
 {
   "rewrites": [
-    { "source": "/:code", "destination": "/api/:code" },
-    { "source": "/:code/", "destination": "/api/:code" },
-    { "source": "/:code/:path*", "destination": "/api/:code" },
-    { "source": "/(.*)", "destination": "/api" }
+    { "source": "/:code/manifest_kaya.json", "destination": "/api/[code]?code=:code" },
+    { "source": "/:code/sw.js", "destination": "/api/[code]?code=:code" },
+    { "source": "/:code", "destination": "/api/[code]?code=:code" },
+    { "source": "/:code/", "destination": "/api/[code]?code=:code" },
+    { "source": "/:code/:path*", "destination": "/api/[code]?code=:code" }
   ]
 }
