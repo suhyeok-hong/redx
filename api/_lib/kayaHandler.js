@@ -5,15 +5,15 @@ export function createTripHandler(CODE) {
   const DISPLAY_CODE = CLEAN || CODE; // 혹시 k만 들어왔을때 대비
 
   const TARGET = `http://${DISPLAY_CODE}.kaya.kro.kr`;
-  const SCOPE = `/${DISPLAY_CODE}/`;
+  const SCOPE = `/${CODE}/`;
 
   return function handler(req, res) {
     const url = req.url || "";
     if (url.includes("manifest.json")) {
       res.setHeader("Content-Type", "application/manifest+json");
       return res.status(200).send(JSON.stringify({
-        name: `redX Ticket ${DISPLAY_CODE}`,
-        short_name: `Ticket ${DISPLAY_CODE}`,
+        name: `Kaya Tours ${DISPLAY_CODE}`,
+        short_name: `Kaya ${DISPLAY_CODE}`,
         start_url: `${SCOPE}?pwa=1`,
         scope: SCOPE,
         display: "standalone",
