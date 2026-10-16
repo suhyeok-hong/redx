@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/:code/manifest.json", "destination": "/api/[code]?code=:code" },
     { "source": "/:code/manifest_kaya.json", "destination": "/api/[code]?code=:code" },
     { "source": "/:code/sw.js", "destination": "/api/[code]?code=:code" },
     { "source": "/:code", "destination": "/api/[code]?code=:code" },
