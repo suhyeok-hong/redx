@@ -22,7 +22,7 @@ export default function handler(req, res) {
     target = `http://${lower}.trips.kro.kr`;
     manifestName = "manifest.json";
     icon = "/rt-512.png";
-    themeColor = "#f00000";
+    themeColor = "#af0000";
   } else {
     displayCode = code;
     target = `http://${code}.trips.kro.kr`;
